@@ -48,3 +48,14 @@ jobs: # job 설정
         run: npm install
       - name: react build
         run: npm run build
+
+      - name: Deploy
+        env:
+          AWS_ACCESS_KEY: ${{ secrets.AWS_S3_ACCESS_KEY_ID}}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_S3_SECRET_ACCESS_KEY_ID}}
+          BUCKET_NAME: ${{ secrets.AWS_S3_BUCKET_NAME}}
+        run: |
+          aws s3 cp \
+            --recursive \
+            --region ap-northeast-2 \
+            build s3://team-35-issues-tracker	
