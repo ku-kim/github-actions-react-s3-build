@@ -7,31 +7,18 @@ on:  # workflow 실행 조건
 
 
 jobs: # job 설정
-  test: # job id
-    name: Hello test job! # job 이름
-    runs-on: ubuntu-20.04 # job 가상환경
-    steps:
-      - name: check ls
-        run: ls -al # checkout 하기전 확인
-      - name: checkout Github Action # step 이름
-        uses: actions/checkout@v3 # github actions 가상 환경에 해당 레포 소스 가져오기
-      - name: after actions/checkout ls
-        run: ls -al # checkout 후 확인
-      - name: job - test echo 
-        run: echo "Hello test job!"
-
   build: # job id
     needs: test
-    name: Hello build job!
+    name: react build & deploy
     runs-on: ubuntu-20.04
     defaults:
       run:
         working-directory: ./fe # 기본 워킹 디렉토리 설정
     steps: 
-      - name: checkout Github Action # step 이름
+      - name: checkout Github Action
         uses: actions/checkout@v3 # github actions 가상 환경에 해당 레포 소스 가져오기
 
-    # cache : https://github.com/actions/cache/blob/main/examples.md#node---npm
+    # npm package cache 사용하기 : https://github.com/actions/cache/blob/main/examples.md#node---npm
       - name: Get npm cache directory
         id: npm-cache-dir
         run: |
@@ -49,6 +36,7 @@ jobs: # job 설정
       - name: react build
         run: npm run build
 
+      # aws user 연결
       - name: Configure AWS credentials 
         uses: aws-actions/configure-aws-credentials@v1 
         with: 
@@ -56,6 +44,7 @@ jobs: # job 설정
           aws-secret-access-key: ${{ secrets.AWS_S3_SECRET_ACCESS_KEY_ID }} 
           aws-region: ap-northeast-2
 
+      # react 빌드한 /build를 s3로 업로드
       - name: Upload to S3
         env:
           BUCKET_NAME: ${{ secrets.AWS_S3_BUCKET_NAME}}
@@ -63,6 +52,7 @@ jobs: # job 설정
           aws s3 sync \
             ./build s3://$BUCKET_NAME
 
+      # 업로드한 s3 파일을 각 CDN 캐시 무효화하여 리프레시 하기
       - name: CloudFront Invalidation
         env:
           CLOUD_FRONT_ID: ${{ secrets.AWS_CLOUDFRONT_ID}}
