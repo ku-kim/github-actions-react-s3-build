@@ -62,3 +62,10 @@ jobs: # job 설정
         run: |
           aws s3 sync \
             ./build s3://$BUCKET_NAME
+
+      - name: CloudFront Invalidation
+        env:
+          CLOUD_FRONT_ID: ${{ secrets.AWS_CLOUDFRONT_ID}}
+        run: |
+          aws cloudfront create-invalidation \
+            --distribution-id $CLOUD_FRONT_ID --paths /*
