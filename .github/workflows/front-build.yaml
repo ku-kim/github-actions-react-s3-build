@@ -21,6 +21,7 @@ jobs: # job 설정
         run: echo "Hello test job!"
 
   build: # job id
+    needs: test
     name: Hello build job!
     runs-on: ubuntu-20.04
     defaults:
