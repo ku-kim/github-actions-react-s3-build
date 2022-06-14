@@ -23,8 +23,13 @@ jobs: # job 설정
   build: # job id
     name: Hello build job!
     runs-on: ubuntu-20.04
+    defaults:
+      run:
+        working-directory: ./fe # 기본 워킹 디렉토리 설정
     steps: 
-      - name: simple ls
-        run: ls -al 
-      - name: job - build echo
-        run: echo "Hello build job!"
+      - name: checkout Github Action # step 이름
+        uses: actions/checkout@v3 # github actions 가상 환경에 해당 레포 소스 가져오기
+      - name: install npm dependencies
+        run: npm install
+      - name: react build
+        run: npm run build
