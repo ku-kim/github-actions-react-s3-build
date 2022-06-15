@@ -1,13 +1,13 @@
-name: Test Front build workflow # workflow 이름
+name: 리액트 빌드 / 배포 Actions # workflow 이름
 
 on:  # workflow 실행 조건
   push:
     branches:
-      - deploy
+      - main # 메인 브랜치가 푸쉬된 경우
 
 jobs: # job 설정
-  build: # job id
-    name: react build & deploy
+  react: # job id
+    name: 리액트 build & deploy
     runs-on: ubuntu-20.04
     defaults:
       run:
@@ -15,35 +15,14 @@ jobs: # job 설정
     steps: 
       - name: checkout Github Action
         uses: actions/checkout@v3 # github actions 가상 환경에 해당 레포 소스 가져오기
-
-    ## npm package cache 사용하기 : https://github.com/actions/cache/blob/main/examples.md#node---npm
-    #  - name: Get npm cache directory
-    #    id: npm-cache-dir
-    #    run: |
-    #      echo "::set-output name=dir::$(npm config get cache)"
-    #  - uses: actions/cache@v3
-    #    id: npm-cache
-    #    with:
-    #      path: ${{ steps.npm-cache-dir.outputs.dir }}
-    #      key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
-    #      restore-keys: |
-    #        ${{ runner.os }}-node-
       
-      - name: Cache node modules
-        uses: actions/cache@v2
-        id: cache
-        with:
-          path: node_modules
-          key: npm-packages-${{ hashFiles('**/package-lock.json') }}
-
       - name: install npm dependencies
-        if: steps.npm-cache.outputs.cache-hit != 'true'
         run: npm install
 
       - name: React build
         run: npm run build
 
-      # aws user setup
+      # aws user 연결
       - name: Configure AWS credentials 
         uses: aws-actions/configure-aws-credentials@v1 
         with: 
@@ -66,17 +45,3 @@ jobs: # job 설정
         run: |
           aws cloudfront create-invalidation \
             --distribution-id $CLOUD_FRONT_ID --paths /*
-
-      # slack 알람
-      - name: Send slack when failed
-        if: ${{ failure() }}
-        uses: ../.github/actions/slack-notify
-        with:
-          slack_incoming_url: ${{ secrets.SLACK_INCOMING_URL }}
-
-      - name: Send slack if completed
-        if: ${{ success() }}
-        uses: ../.github/actions/slack-notify
-        with:
-          status: success
-          slack_incoming_url: ${{ secrets.SLACK_WEBHOOK }}
