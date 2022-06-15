@@ -3,8 +3,7 @@ name: Test Front build workflow # workflow 이름
 on:  # workflow 실행 조건
   push:
     branches:
-      - main # 메인 브랜치가 푸쉬된 경우
-
+      - deploy
 
 jobs: # job 설정
   build: # job id
@@ -23,7 +22,7 @@ jobs: # job 설정
         run: |
           echo "::set-output name=dir::$(npm config get cache)"
       - uses: actions/cache@v3
-        id: npm-cache # use this to check for `cache-hit` ==> if: steps.npm-cache.outputs.cache-hit != 'true'
+        id: npm-cache
         with:
           path: ${{ steps.npm-cache-dir.outputs.dir }}
           key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
@@ -31,11 +30,13 @@ jobs: # job 설정
             ${{ runner.os }}-node-
       
       - name: install npm dependencies
+        if: steps.npm-cache.outputs.cache-hit != 'true'
         run: npm install
-      - name: react build
+
+      - name: React build
         run: npm run build
 
-      # aws user 연결
+      # aws user setup
       - name: Configure AWS credentials 
         uses: aws-actions/configure-aws-credentials@v1 
         with: 
@@ -58,3 +59,8 @@ jobs: # job 설정
         run: |
           aws cloudfront create-invalidation \
             --distribution-id $CLOUD_FRONT_ID --paths /*
+
+      - name: Slack Notification
+        uses: rtCamp/action-slack-notify@v2
+        env:
+          SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
