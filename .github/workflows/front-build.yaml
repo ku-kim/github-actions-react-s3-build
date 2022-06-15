@@ -28,6 +28,7 @@ jobs: # job 설정
     #      key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
     #      restore-keys: |
     #        ${{ runner.os }}-node-
+      
       - name: Cache node modules
         uses: actions/cache@v2
         id: cache
@@ -69,13 +70,13 @@ jobs: # job 설정
       # slack 알람
       - name: Send slack when failed
         if: ${{ failure() }}
-        uses: ./.github/actions/slack-notify
+        uses: ../.github/actions/slack-notify
         with:
           slack_incoming_url: ${{ secrets.SLACK_INCOMING_URL }}
 
       - name: Send slack if completed
         if: ${{ success() }}
-        uses: ./.github/actions/slack-notify
+        uses: ../.github/actions/slack-notify
         with:
           status: success
           slack_incoming_url: ${{ secrets.SLACK_WEBHOOK }}
